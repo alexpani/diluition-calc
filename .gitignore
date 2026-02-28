@@ -1,0 +1,5 @@
+# Configurazione admin - contiene hash della password
+config.php
+
+# Setup una-tantum - da eliminare dopo l'uso
+setup.php
