@@ -41,7 +41,7 @@
     "id": 4,
     "brand": "Labocosmetica",
     "name": "Omnia",
-    "category": "Interni",
+    "category": "APC Interni",
     "note": null,
     "uses": [
       { "name": "Sporchi difficili (pelle, plastica, tessuti)", "ratio": 5 },
