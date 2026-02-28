@@ -1,0 +1,105 @@
+[
+  {
+    "id": 1,
+    "brand": "Cleantle",
+    "name": "EcoWash",
+    "category": "Multi-uso",
+    "note": null,
+    "uses": [
+      { "name": "Lavaggio rinseless / Waterless", "ratio": 200 },
+      { "name": "Quick detailer", "ratio": 5 },
+      { "name": "Pulitore vetri", "ratio": 15 },
+      { "name": "Detergente interni rapido", "ratio": 15 },
+      { "name": "Clay Lube", "ratio": "5-15", "ratioValue": 5 }
+    ]
+  },
+  {
+    "id": 2,
+    "brand": "Labocosmetica",
+    "name": "Ductile",
+    "category": "APC",
+    "note": null,
+    "uses": [
+      { "name": "Motori, cerchi, passaruota", "ratio": 3 },
+      { "name": "Battute e prelavaggio", "ratio": "20-30", "ratioValue": 20 },
+      { "name": "Tessuti e moquette", "ratio": 10 },
+      { "name": "Plastiche interne", "ratio": 20 }
+    ]
+  },
+  {
+    "id": 3,
+    "brand": "Labocosmetica",
+    "name": "Energo",
+    "category": "Decontaminante Calcare",
+    "note": null,
+    "uses": [
+      { "name": "Casi molto gravi", "ratio": "puro", "ratioValue": 0 },
+      { "name": "Uso standard", "ratio": 5 }
+    ]
+  },
+  {
+    "id": 4,
+    "brand": "Labocosmetica",
+    "name": "Omnia",
+    "category": "Interni",
+    "note": null,
+    "uses": [
+      { "name": "Sporchi difficili (pelle, plastica, tessuti)", "ratio": 5 },
+      { "name": "Quick Interior Detailer", "ratio": 10 }
+    ]
+  },
+  {
+    "id": 5,
+    "brand": "Labocosmetica",
+    "name": "Primus",
+    "category": "Prelavaggio",
+    "note": null,
+    "uses": [
+      { "name": "Spray: cerchi e gomme", "ratio": "3-10", "ratioValue": 3 },
+      { "name": "Spray: insetti e parte bassa", "ratio": 20 },
+      { "name": "Spray: auto molto sporca", "ratio": 50 },
+      { "name": "Spray: auto mediamente sporca", "ratio": 80 },
+      { "name": "Spray: lavaggi frequenti", "ratio": 100 },
+      { "name": "Foam Gun: sporco invernale/ostinato", "ratio": 5 },
+      { "name": "Foam Gun: sporco estivo/mantenimento", "ratio": 10 },
+      { "name": "Secchio: shampoo sporco ostinato", "ratio": 100 }
+    ]
+  },
+  {
+    "id": 6,
+    "brand": "Labocosmetica",
+    "name": "Purifica",
+    "category": "Shampoo",
+    "note": null,
+    "uses": [
+      { "name": "Foam Gun: sporco intenso", "ratio": "5-10", "ratioValue": 5 },
+      { "name": "Foam Gun: mantenimento", "ratio": 10 },
+      { "name": "Secchio: sporco intenso", "ratio": "100-400", "ratioValue": 100 },
+      { "name": "Secchio: mantenimento", "ratio": 400 },
+      { "name": "Nebulizzatore", "ratio": "100-200", "ratioValue": 100 }
+    ]
+  },
+  {
+    "id": 7,
+    "brand": "Labocosmetica",
+    "name": "Revitax",
+    "category": "Shampoo",
+    "note": null,
+    "uses": [
+      { "name": "Auto non protette", "ratio": 100 },
+      { "name": "Mantenimento coating/sigillanti", "ratio": 200 }
+    ]
+  },
+  {
+    "id": 8,
+    "brand": "Labocosmetica",
+    "name": "Semper",
+    "category": "Shampoo",
+    "note": null,
+    "uses": [
+      { "name": "Sporco ostinato", "ratio": 800 },
+      { "name": "Sporco medio", "ratio": 1000 },
+      { "name": "Sporco leggero", "ratio": 1200 }
+    ]
+  }
+]
