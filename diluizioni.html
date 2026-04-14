@@ -790,7 +790,12 @@
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getUniqueBrands() {
+      return [...new Set(products.map(p => p.brand))].sort();
     }
 
     // --- Fetch prodotti ---
@@ -815,31 +820,30 @@
     function renderVolumePresets() {
       const container = document.getElementById('volume-presets');
       container.innerHTML = volumePresets.map(v =>
-        `<button class="preset-btn" onclick="selectVolume(${v})">${formatVolume(v)}</button>`
+        `<button class="preset-btn" data-volume="${v}" onclick="selectVolume(${v})">${formatVolume(v)}</button>`
       ).join('');
     }
 
     function renderRatioPresets() {
       const container = document.getElementById('ratio-presets');
       container.innerHTML = ratioPresets.map(r =>
-        `<button class="preset-btn" onclick="selectRatio(${r})">1:${r}</button>`
+        `<button class="preset-btn" data-ratio="${r}" onclick="selectRatio(${r})">1:${r}</button>`
       ).join('');
     }
 
     function renderBottlePresets() {
       const container = document.getElementById('bottle-presets');
       container.innerHTML = bottlePresets.map(b =>
-        `<button class="preset-btn" onclick="selectBottle(${b})">${formatVolume(b)}</button>`
+        `<button class="preset-btn" data-bottle="${b}" onclick="selectBottle(${b})">${formatVolume(b)}</button>`
       ).join('');
     }
 
     // --- Products tab ---
 
     function renderBrandSelect() {
-      const brands = [...new Set(products.map(p => p.brand))].sort();
       const sel = document.getElementById('brand-select');
       sel.innerHTML = '<option value="">Seleziona un marchio...</option>' +
-        brands.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('');
+        getUniqueBrands().map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('');
       // reset stato
       document.getElementById('product-select-group').style.display = 'none';
       document.getElementById('product-card').style.display = 'none';
@@ -918,26 +922,23 @@
         b.classList.toggle('active', b.dataset.name === name);
       });
 
-      // Passa al tab calcolatore
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      document.querySelector('[data-tab="calculator"]').classList.add('active');
-      document.getElementById('calculator').classList.add('active');
-
+      setActiveTab('calculator');
       updateRatioButtons();
       if (document.getElementById('volume').value) calculate();
     }
 
     // --- Tab setup ---
 
+    function setActiveTab(id) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector(`.tab[data-tab="${id}"]`).classList.add('active');
+      document.getElementById(id).classList.add('active');
+    }
+
     function setupTabs() {
       document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-          tab.classList.add('active');
-          document.getElementById(tab.dataset.tab).classList.add('active');
-        });
+        tab.addEventListener('click', () => setActiveTab(tab.dataset.tab));
       });
     }
 
@@ -965,20 +966,23 @@
     }
 
     function updateVolumeButtons() {
-      document.querySelectorAll('#volume-presets .preset-btn').forEach((btn, i) => {
-        btn.classList.toggle('active', volumePresets[i] == selectedVolume);
+      const target = Number(selectedVolume);
+      document.querySelectorAll('#volume-presets .preset-btn').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.volume) === target);
       });
     }
 
     function updateRatioButtons() {
-      document.querySelectorAll('#ratio-presets .preset-btn').forEach((btn, i) => {
-        btn.classList.toggle('active-blue', ratioPresets[i] == selectedRatio && !selectedUse);
+      const target = Number(selectedRatio);
+      document.querySelectorAll('#ratio-presets .preset-btn').forEach(btn => {
+        btn.classList.toggle('active-blue', !selectedUse && Number(btn.dataset.ratio) === target);
       });
     }
 
     function updateBottleButtons() {
-      document.querySelectorAll('#bottle-presets .preset-btn').forEach((btn, i) => {
-        btn.classList.toggle('active', bottlePresets[i] == selectedBottle);
+      const target = Number(selectedBottle);
+      document.querySelectorAll('#bottle-presets .preset-btn').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.bottle) === target);
       });
     }
 
@@ -1135,9 +1139,7 @@
         return;
       }
 
-      const brands = [...new Set(products.map(p => p.brand))].sort();
-
-      container.innerHTML = brands.map(brand => {
+      container.innerHTML = getUniqueBrands().map(brand => {
         const brandProducts = products.filter(p => p.brand === brand);
         return `
           <div class="admin-brand-section">
@@ -1149,8 +1151,8 @@
                   <div class="admin-product-meta">${escapeHtml(p.category)} &middot; ${p.uses.length} utilizz${p.uses.length === 1 ? 'o' : 'i'}</div>
                 </div>
                 <div class="admin-product-actions">
-                  <button class="btn-edit" onclick="showProductForm(getProductById(${p.id}))">Modifica</button>
-                  <button class="btn-delete" onclick="confirmDeleteProduct(${p.id}, '${escapeHtml(p.name)}')">Elimina</button>
+                  <button class="btn-edit" onclick="showProductForm(${p.id})">Modifica</button>
+                  <button class="btn-delete" onclick="confirmDeleteProduct(${p.id})">Elimina</button>
                 </div>
               </div>
             `).join('')}
@@ -1159,13 +1161,10 @@
       }).join('');
     }
 
-    function getProductById(id) {
-      return products.find(p => p.id === id);
-    }
-
     // --- Admin: modal prodotto ---
 
-    function showProductForm(product = null) {
+    function showProductForm(productId = null) {
+      const product = productId ? products.find(p => p.id === productId) : null;
       editingProductId = product ? product.id : null;
 
       document.getElementById('modal-title').textContent = product ? 'Modifica prodotto' : 'Aggiungi prodotto';
@@ -1280,12 +1279,11 @@
       }
     }
 
-    async function confirmDeleteProduct(id, name) {
-      if (!confirm(`Eliminare il prodotto "${name}"?`)) return;
-      await deleteProduct(id);
-    }
+    async function confirmDeleteProduct(id) {
+      const product = products.find(p => p.id === id);
+      if (!product) return;
+      if (!confirm(`Eliminare il prodotto "${product.name}"?`)) return;
 
-    async function deleteProduct(id) {
       try {
         const res = await fetch('api.php', {
           method: 'DELETE',
