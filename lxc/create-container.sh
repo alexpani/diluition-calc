@@ -15,7 +15,7 @@ set -euo pipefail
 
 CTID="${CTID:-120}"
 HOSTNAME="${HOSTNAME:-calcolo-diluizioni}"
-TEMPLATE="${TEMPLATE:-local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst}"
+TEMPLATE="${TEMPLATE:-local:vztmpl/debian-13-standard_13.0-1_amd64.tar.zst}"
 STORAGE="${STORAGE:-local-lvm}"
 DISK_SIZE="${DISK_SIZE:-4}"           # GB
 MEMORY="${MEMORY:-512}"               # MB

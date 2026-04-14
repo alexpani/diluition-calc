@@ -16,8 +16,15 @@ su **Proxmox VE**, con stack **Nginx + PHP-FPM**.
 
 ## Prerequisiti
 
-- Host Proxmox VE con template Debian 12 scaricato
-  (`pveam update && pveam download local debian-12-standard_12.2-1_amd64.tar.zst`).
+- Host Proxmox VE con template Debian 13 scaricato.
+  Per vedere il nome esatto disponibile e scaricarlo:
+  ```bash
+  pveam update
+  pveam available | grep debian-13
+  pveam download local debian-13-standard_13.0-1_amd64.tar.zst
+  ```
+  (se il nome file e' leggermente diverso, passalo via `TEMPLATE=...`
+  a `create-container.sh`).
 - Una chiave SSH sulla tua workstation (`~/.ssh/id_ed25519.pub`).
 - `rsync` installato sulla workstation.
 
@@ -41,7 +48,7 @@ Variabili utili (tutte opzionali, hanno un default):
 |------------------|-----------------------------------------------------------|
 | `CTID`           | `120`                                                     |
 | `HOSTNAME`       | `calcolo-diluizioni`                                      |
-| `TEMPLATE`       | `local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst`    |
+| `TEMPLATE`       | `local:vztmpl/debian-13-standard_13.0-1_amd64.tar.zst`    |
 | `STORAGE`        | `local-lvm`                                               |
 | `DISK_SIZE`      | `4` (GB)                                                  |
 | `MEMORY`         | `512` (MB)                                                |

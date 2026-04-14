@@ -13,7 +13,7 @@ set -euo pipefail
 
 WEB_ROOT="${WEB_ROOT:-/var/www/calcolo-diluizioni}"
 DEPLOY_USER="${DEPLOY_USER:-deploy}"
-PHP_VERSION="${PHP_VERSION:-8.2}"
+PHP_VERSION="${PHP_VERSION:-8.4}"
 SITE_NAME="calcolo-diluizioni"
 
 export DEBIAN_FRONTEND=noninteractive
@@ -23,10 +23,10 @@ apt-get update -y
 apt-get upgrade -y
 
 echo "[+] Installazione nginx, PHP-FPM e utility..."
+# Nota: php-json non e' piu' un pacchetto separato (JSON e' built-in in PHP 8+).
 apt-get install -y --no-install-recommends \
   nginx \
   php-fpm \
-  php-json \
   php-mbstring \
   rsync \
   sudo \

@@ -32,7 +32,7 @@ LXC_SSH_HOST="${LXC_SSH_HOST:?Devi impostare LXC_SSH_HOST in .env}"
 LXC_SSH_USER="${LXC_SSH_USER:-deploy}"
 LXC_SSH_PORT="${LXC_SSH_PORT:-22}"
 LXC_WEB_ROOT="${LXC_WEB_ROOT:-/var/www/calcolo-diluizioni}"
-LXC_PHP_VERSION="${LXC_PHP_VERSION:-8.2}"
+LXC_PHP_VERSION="${LXC_PHP_VERSION:-8.4}"
 
 SSH_OPTS=(-p "$LXC_SSH_PORT" -o StrictHostKeyChecking=accept-new)
 RSYNC_SSH="ssh ${SSH_OPTS[*]}"
