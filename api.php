@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once __DIR__ . '/config.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -51,13 +50,16 @@ function respondError(string $message, int $code = 400): void {
     exit;
 }
 
-// --- Routes ---
+// --- Public route (no session, niente cookie anonimi sui lettori) ---
 
-// GET / — lista prodotti (pubblica)
-if ($method === 'GET' && $action === '') {
+if (($method === 'GET' || $method === 'HEAD') && $action === '') {
     echo file_get_contents($productsFile) ?: '[]';
     exit;
 }
+
+// --- Auth-aware routes (session required) ---
+
+session_start();
 
 // GET ?action=check — verifica sessione admin
 if ($method === 'GET' && $action === 'check') {
@@ -77,12 +79,15 @@ if ($method === 'POST' && $action === 'login') {
         respondError('Password errata', 401);
     }
 
+    // Previene session fixation: nuovo ID di sessione post-login.
+    session_regenerate_id(true);
     $_SESSION['admin'] = true;
     respond(['success' => true]);
 }
 
 // POST ?action=logout
 if ($method === 'POST' && $action === 'logout') {
+    $_SESSION = [];
     session_destroy();
     respond(['success' => true]);
 }
