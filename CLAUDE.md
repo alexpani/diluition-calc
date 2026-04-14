@@ -34,13 +34,9 @@ calcolo-diluizioni/
 ├── products.json        # Persistent product catalog (written by api.php)
 ├── config.php           # [git-ignored] admin password hash
 ├── setup.php            # [git-ignored] one-shot admin password setup helper
-├── .env.example         # Template for deployment env vars
-└── lxc/                 # Proxmox LXC deployment infrastructure
-    ├── README.md        # Migration / deploy step-by-step
-    ├── create-container.sh
-    ├── provision.sh
-    ├── nginx-site.conf
-    └── deploy.sh
+└── lxc/                 # LXC deployment documentation
+    ├── README.md        # Production snapshot + redeploy runbook
+    └── nginx-site.conf  # Versioned copy of the production Nginx site
 ```
 
 ### File Organization (diluizioni.html)
@@ -290,14 +286,15 @@ Notes:
 ## Deployment
 
 The app runs inside a **non-privileged LXC container on Proxmox VE**
-(Debian 13 Trixie + Nginx + PHP-FPM 8.4). All deployment tooling lives in
-[`lxc/`](lxc/):
+(Debian 13 Trixie + Nginx + PHP-FPM 8.4). The container was provisioned
+manually — there are no bootstrap scripts in the repo. What lives in
+[`lxc/`](lxc/) is documentation and one versioned config file:
 
-- `lxc/create-container.sh` — provisions the CT on the Proxmox host (`pct create`)
-- `lxc/provision.sh` — runs inside the CT: installs nginx + php-fpm, creates web root and users
-- `lxc/nginx-site.conf` — Nginx virtual host (blocks `config.php`, `.env*`, dotfiles)
-- `lxc/deploy.sh` — manual rsync-over-SSH deploy from workstation
-- `lxc/README.md` — full migration / deploy walkthrough
+- `lxc/README.md` — production snapshot + redeploy runbook + admin password
+  management + troubleshooting
+- `lxc/nginx-site.conf` — versioned copy of the Nginx site deployed at
+  `/etc/nginx/sites-available/calcolo-diluizioni` (blocks `config.php`,
+  `.env*`, dotfiles; `fastcgi_pass` to `/run/php/php-fpm.sock`)
 
 The previous FTP-based deploy to activecloud (via GitHub Actions) has been
 removed. If a change breaks production, **do not** restore the old FTP workflow;
@@ -312,6 +309,17 @@ Production layout inside the container:
 ├── products.json        # 0664 www-data:www-data (writable by PHP-FPM)
 └── config.php           # 0640 root:www-data     (readable by PHP-FPM only)
 ```
+
+Redeploy flow (inside the container, after a merge to `main`):
+
+```bash
+cd /tmp/diluition-calc && git fetch origin main && git reset --hard origin/main
+install -m 0644 -o www-data -g www-data diluizioni.html /var/www/calcolo-diluizioni/diluizioni.html
+install -m 0644 -o www-data -g www-data api.php        /var/www/calcolo-diluizioni/api.php
+systemctl reload php8.4-fpm
+```
+
+See `lxc/README.md` for the full runbook.
 
 ## Testing
 

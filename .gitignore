@@ -4,5 +4,6 @@ config.php
 # Setup una-tantum - da eliminare dopo l'uso
 setup.php
 
-# Credenziali FTP - non versionare mai
+# Segreti vari (non versionare mai file .env*)
 .env
+.env.*
