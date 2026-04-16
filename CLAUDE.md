@@ -44,10 +44,13 @@ calcolo-diluizioni/
 | Section | Lines | Description |
 |---------|-------|-------------|
 | HTML Head & Meta | 1-6 | Document declaration, UTF-8, viewport |
-| CSS Styles | 7-320 | Complete inline stylesheet |
-| HTML Structure | 321-445 | Tab-based UI with three sections |
-| JavaScript | 447-781 | Application logic and data |
-| Closing Tags | 782-783 | `</body>` and `</html>` |
+| CSS Styles | 7-557 | Complete inline stylesheet |
+| HTML Structure | 558-758 | Tab-based UI (calcolatore, rabbocco, prodotti, admin) + modal prodotto |
+| JavaScript | 759-1325 | Application logic (data is loaded at runtime from `api.php`) |
+| Closing Tags | 1326-1327 | `</body>` and `</html>` |
+
+Line numbers drift whenever the file is edited — treat them as a current
+snapshot, not load-bearing. Prefer `grep -n "function foo"` to locate things.
 
 ## Architecture
 
@@ -81,15 +84,21 @@ calcolo-diluizioni/
 
 ### 3. Riferimento Prodotti (Products Tab)
 - Reference guide for the supported cleaning products
-- Each product has multiple usage scenarios with recommended ratios
+- Two-step selection: brand dropdown (`#brand-select`) → product dropdown
+  (`#product-select`, only visible once a brand is picked)
+- Each product has a category badge, optional note, and a list of usage
+  scenarios with recommended ratios
 - Clicking a use auto-sets the ratio and switches to Calculator tab
 - The list is loaded at startup via `GET /api.php` (reads `products.json`)
 
 ### 4. Area Admin (password protected)
 - Login via `POST /api.php?action=login` (bcrypt password check in `config.php`)
-- Session-based auth (PHP `$_SESSION['admin']`)
+- Session-based auth (PHP `$_SESSION['admin']`); login calls
+  `session_regenerate_id(true)` to prevent session fixation
 - CRUD operations on products: add / update / delete, persisted in `products.json`
-- UI exposed inside `diluizioni.html` when the user is authenticated
+- UI exposed inside `diluizioni.html` when the user is authenticated:
+  grouped-by-brand product list + modal form (`#product-modal`) for
+  add/edit with a dynamic list of "utilizzi"
 
 ## Code Conventions
 
@@ -138,68 +147,87 @@ water = product * ratio;
 
 ### Refill Calculation
 ```javascript
-existingConcentrate = remaining / (1 + currentRatio);
-totalConcentrateNeeded = bottle / (1 + targetRatio);
-concentrateToAdd = totalConcentrateNeeded - existingConcentrate;
-volumeToAdd = bottle - remaining;
-waterToAdd = volumeToAdd - concentrateToAdd;
+// currentR = current ratio in the bottle, targetR = desired ratio after refill
+existingConcentrate    = remaining / (1 + currentR);
+totalConcentrateNeeded = bottle    / (1 + targetR);
+concentrateToAdd       = totalConcentrateNeeded - existingConcentrate;
+volumeToAdd            = bottle - remaining;
+waterToAdd             = volumeToAdd - concentrateToAdd;
 ```
 
 ## Common Development Tasks
 
 ### Adding a New Product
 
-Add to the `products` array (lines 453-533):
+Products are **not** hardcoded in `diluizioni.html` — the `products` array is
+loaded at runtime from `GET /api.php`. There are two supported workflows:
 
-```javascript
-{
-  name: "Product Name",
-  category: "Category",
-  uses: [
-    { name: "Use case 1", ratio: 10 },
-    { name: "Use case 2", ratio: "5-10", ratioValue: 5 }, // Range with default
-  ]
-}
-```
+1. **Admin UI (preferred)**: log into the Admin tab and use "+ Aggiungi
+   prodotto". The new product is persisted to `products.json` via
+   `POST /api.php?action=add`, which assigns a numeric `id`.
+2. **Direct edit of `products.json`** (local dev / bootstrap / seed):
+
+   ```json
+   {
+     "id": 9,
+     "brand": "Brand Name",
+     "name": "Product Name",
+     "category": "Category",
+     "note": null,
+     "uses": [
+       { "name": "Use case 1", "ratio": 10 },
+       { "name": "Use case 2", "ratio": "5-10", "ratioValue": 5 }
+     ]
+   }
+   ```
 
 Notes:
-- `ratio` can be a number or string (for ranges like "5-10")
-- When using a range string, provide `ratioValue` for the default click value
+- `ratio` can be a number or a string (for ranges like `"5-10"` or `"puro"`)
+- When `ratio` is a string, provide `ratioValue` for the numeric default
+  used when the user clicks the button
+- If editing `products.json` by hand, keep `id`s unique — `api.php` assigns
+  new ones as `max(id) + 1`
 
 ### Adding a Preset Ratio
 
-Add to `ratioPresets` array (line 450):
+Edit the `ratioPresets` array in `diluizioni.html`:
 ```javascript
 const ratioPresets = [1, 2, 3, ..., 1200, YOUR_NEW_RATIO];
 ```
 
 ### Adding a Preset Volume
 
-Add to `volumePresets` array (line 449):
+Edit the `volumePresets` array in `diluizioni.html`:
 ```javascript
 const volumePresets = [500, 1000, 2000, ..., YOUR_NEW_VOLUME];
 ```
 
 ### Adding a Bottle Preset
 
-Add to `bottlePresets` array (line 451):
+Edit the `bottlePresets` array in `diluizioni.html`:
 ```javascript
 const bottlePresets = [500, 750, 1000, YOUR_NEW_BOTTLE];
 ```
 
+All three preset arrays are declared together near the top of the `<script>`
+block (`grep -n "volumePresets" diluizioni.html`).
+
 ### Modifying Calculations
 
-- Basic dilution: `calculate()` function (lines 635-655)
-- Refill logic: `calculateRefill()` function (lines 658-718)
+- Basic dilution: `calculate()` function in `diluizioni.html`
+- Refill logic: `calculateRefill()` function in `diluizioni.html`
 
 ### Styling Changes
 
-All CSS is inline in the `<style>` block (lines 7-320). Key classes:
+All CSS is inline in the `<style>` block at the top of `diluizioni.html`.
+Key classes:
 - `.card` - Main container
 - `.tab` / `.tab-content` - Tab system
 - `.preset-btn` - Preset buttons
 - `.result` - Result display boxes
-- `.btn-primary` - Main action button
+- `.btn-primary` / `.btn-secondary` / `.btn-logout` - Action buttons
+- `.product-card` / `.product-category-badge` - Products tab
+- `.modal-overlay` / `.modal-box` - Admin add/edit product modal
 
 ## Data Structures
 
@@ -239,22 +267,32 @@ Labocosmetica products. Don't rely on this list in code — always read from
 
 ### Key Functions Reference
 
-| Function | Line | Purpose |
-|----------|------|---------|
-| `init()` | 542 | App initialization, renders all presets and sets up tabs |
-| `formatVolume(ml)` | 550 | Formats ml to "Xml" or "XL" display |
-| `renderVolumePresets()` | 555 | Renders volume preset buttons |
-| `renderRatioPresets()` | 562 | Renders ratio preset buttons |
-| `renderBottlePresets()` | 569 | Renders bottle preset buttons |
-| `renderProductSelect()` | 576 | Populates product dropdown |
-| `setupTabs()` | 583 | Wires up tab click handlers |
-| `selectVolume(v)` | 595 | Handles volume preset selection |
-| `selectRatio(r)` | 602 | Handles ratio preset selection |
-| `selectBottle(b)` | 610 | Handles bottle preset selection |
-| `calculate()` | 635 | Main dilution calculation |
-| `calculateRefill()` | 658 | Refill/top-up calculation |
-| `onProductChange(e)` | 721 | Product dropdown change handler |
-| `selectProductUse(name, ratioValue)` | 742 | Sets ratio from product use and switches to calculator |
+All functions live in the `<script>` block of `diluizioni.html`. Line numbers
+are approximate and drift with edits — use `grep -n "function foo"` for the
+current location.
+
+| Function | Purpose |
+|----------|---------|
+| `init()` | Bootstraps the app: fetches products, renders presets, wires tabs, checks auth |
+| `fetchProducts()` | `GET /api.php` → populates the in-memory `products` array |
+| `formatVolume(ml)` | Formats ml to "Xml" or "XL" display |
+| `escapeHtml(str)` | Escapes user-supplied strings before interpolating into HTML |
+| `getUniqueBrands()` | Returns the sorted list of distinct brands for the Products tab |
+| `renderVolumePresets()` / `renderRatioPresets()` / `renderBottlePresets()` | Render preset button rows |
+| `renderBrandSelect()` | Populates the brand dropdown on the Products tab |
+| `selectProductUse(btn)` | Reads `data-name` / `data-ratio-value` from the clicked button, sets the ratio, switches to Calculator |
+| `setActiveTab(id)` / `setupTabs()` | Tab switching |
+| `selectVolume(v)` / `selectRatio(r)` / `selectBottle(b)` | Handle preset selection (also keep the inputs in sync) |
+| `updateVolumeButtons()` / `updateRatioButtons()` / `updateBottleButtons()` | Highlight the preset matching the current input value |
+| `calculate()` | Main dilution calculation (Calculator tab) |
+| `calculateRefill()` | Refill/top-up calculation (Rabbocco tab) |
+| `checkAuth()` / `showAdminLogin()` / `showAdminContent()` | Admin auth state handling |
+| `adminLogin()` / `adminLogout()` | Login/logout against `api.php` |
+| `renderAdminProductList()` | Renders the grouped-by-brand admin list with edit/delete buttons |
+| `showProductForm(id?)` / `closeProductForm()` | Open/close the add/edit modal |
+| `createUseRow(use?)` / `addUse()` | Manage the dynamic "utilizzi" list inside the modal |
+| `saveProduct()` | POST (add) or PUT (edit) against `api.php`, then refreshes the UI |
+| `confirmDeleteProduct(id)` | DELETE against `api.php` |
 
 ## Backend API (`api.php`)
 
@@ -276,7 +314,15 @@ A single-file PHP endpoint. Routing is based on the HTTP method plus a
 Notes:
 - `config.php` is git-ignored and must define `const ADMIN_PASSWORD_HASH = '...'`
   (bcrypt, produced via `password_hash(..., PASSWORD_BCRYPT)`).
-- If `ADMIN_PASSWORD_HASH` is empty, `login` returns `503 "Password admin non impostata"`.
+- The public `GET` route intentionally runs **before** `session_start()`, so
+  anonymous readers never get a `PHPSESSID` cookie. `session_start()` is only
+  called for the auth-aware routes (`check`, `login`, `logout`, and write ops).
+- `login` calls `session_regenerate_id(true)` on success to prevent session
+  fixation.
+- If `ADMIN_PASSWORD_HASH` is empty, `login` returns
+  `503 "Password admin non impostata. Esegui setup.php."`. `setup.php` is a
+  git-ignored one-shot helper — in production we set the hash manually (see
+  `lxc/README.md` → "Modificare la password admin").
 - Writes go through `writeProducts()` which uses `file_put_contents` with
   `JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES`. No
   locking — fine for the low-traffic, single-admin usage pattern.
@@ -372,5 +418,7 @@ The application is entirely in **Italian**. Key terms:
 - `main` branch contains production code
 - Feature branches for new development (commonly `claude/...` for AI-assisted work)
 - Commit messages can be in Italian or English
-- No automated CI/CD: deployment to the LXC container is triggered manually via `lxc/deploy.sh`
-- The old FTP-based GitHub Actions workflow has been removed
+- No automated CI/CD: redeploy is a manual `git fetch` + `install` + `systemctl reload php8.4-fpm`
+  inside the LXC container (full runbook in [`lxc/README.md`](lxc/README.md))
+- The old FTP-based GitHub Actions workflow has been removed — do not
+  restore it if production breaks; diagnose the LXC container instead
